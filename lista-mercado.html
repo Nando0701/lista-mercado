@@ -1,0 +1,68 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lista de Mercado</title>
+  <style>
+    body { font-family: sans-serif; margin: 1rem; background: #f4f4f4; }
+    h1 { text-align: center; }
+    input[type="text"] { width: 70%; padding: 8px; }
+    button { padding: 8px 12px; margin-left: 5px; }
+    ul { list-style: none; padding: 0; }
+    li { background: #fff; margin: 8px 0; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+    .comprado { text-decoration: line-through; color: gray; }
+  </style>
+</head>
+<body>
+  <h1>🛒 Lista de Mercado</h1>
+  <input type="text" id="novoItem" placeholder="Adicionar novo item" />
+  <button onclick="adicionarItem()">Adicionar</button>
+  <ul id="lista"></ul>
+
+  <script>
+    let lista = JSON.parse(localStorage.getItem("listaMercado") || "[]");
+    const ul = document.getElementById("lista");
+
+    function render() {
+      ul.innerHTML = "";
+      lista.forEach((item, index) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <span class="${item.comprado ? 'comprado' : ''}" onclick="toggleComprado(${index})">${item.nome}</span>
+          <button onclick="removerItem(${index})">🗑</button>
+        `;
+        ul.appendChild(li);
+      });
+      salvar();
+    }
+
+    function adicionarItem() {
+      const input = document.getElementById("novoItem");
+      const nome = input.value.trim();
+      if (nome) {
+        lista.push({ nome, comprado: false });
+        input.value = "";
+        render();
+      }
+    }
+
+    function removerItem(index) {
+      lista.splice(index, 1);
+      render();
+    }
+
+    function toggleComprado(index) {
+      lista[index].comprado = !lista[index].comprado;
+      render();
+    }
+
+    function salvar() {
+      localStorage.setItem("listaMercado", JSON.stringify(lista));
+    }
+
+    render();
+  </script>
+</body>
+</html>

@@ -7,7 +7,7 @@
   <style>
     body { font-family: sans-serif; margin: 1rem; background: #f4f4f4; }
     input[type="text"] { width: 60%; padding: 8px; font-size: 16px; }
-    select { font-size: 16px; padding: 6px; margin-right: 6px; }
+    select { font-size: 16px; padding: 6px; margin-left: 10px; }
     button { padding: 6px 10px; margin-left: 5px; font-size: 16px; }
     ul { list-style: none; padding: 0; }
     li { background: #fff; margin: 4px 0; padding: 6px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; }
@@ -27,22 +27,29 @@
       align-items: center;
       justify-content: center;
     }
-    .subtitulo { margin: 8px 0 4px 0; font-weight: bold; }
+    .info-bar {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
 
   <div style="display: flex; align-items: center; margin-bottom: 4px;">
+    <input type="text" id="novoItem" placeholder="Adicionar novo item" />
+    <button class="adicionar-btn" onclick="adicionarItem()">+</button>
+  </div>
+
+  <div class="info-bar">
+    <div id="subtitulo">MOSTRANDO: TODOS ITENS</div>
     <select id="filtro" onchange="render()">
       <option value="todos">TODOS ITENS</option>
       <option value="comprar">PARA COMPRAR</option>
       <option value="naoSelecionados">NÃO SELECIONADOS</option>
     </select>
-    <input type="text" id="novoItem" placeholder="Adicionar novo item" />
-    <button class="adicionar-btn" onclick="adicionarItem()">+</button>
   </div>
-
-  <div id="subtitulo" class="subtitulo">MOSTRANDO: TODOS ITENS</div>
 
   <ul id="lista"></ul>
 

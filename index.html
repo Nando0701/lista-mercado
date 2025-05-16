@@ -9,10 +9,12 @@
     body { font-family: sans-serif; margin: 1rem; background: #f4f4f4; }
     h1 { text-align: center; }
     input[type="text"] { width: 70%; padding: 8px; }
-    button { padding: 8px 12px; margin-left: 5px; }
+    button { padding: 6px 10px; margin-left: 5px; }
     ul { list-style: none; padding: 0; }
     li { background: #fff; margin: 8px 0; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
     .comprado { text-decoration: line-through; color: gray; }
+    .item-info { flex-grow: 1; cursor: pointer; }
+    .nao-selecionado { opacity: 0.4; }
   </style>
 </head>
 <body>
@@ -29,8 +31,10 @@
       ul.innerHTML = "";
       lista.forEach((item, index) => {
         const li = document.createElement("li");
+        li.className = item.selecionado ? "" : "nao-selecionado";
         li.innerHTML = `
-          <span class="${item.comprado ? 'comprado' : ''}" onclick="toggleComprado(${index})">${item.nome}</span>
+          <span class="item-info ${item.comprado ? 'comprado' : ''}" onclick="toggleComprado(${index})">${item.nome}</span>
+          <button onclick="toggleSelecionado(${index})">${item.selecionado ? '✓ Selecionado' : 'Selecionar'}</button>
           <button onclick="removerItem(${index})">🗑</button>
         `;
         ul.appendChild(li);
@@ -42,7 +46,7 @@
       const input = document.getElementById("novoItem");
       const nome = input.value.trim();
       if (nome) {
-        lista.push({ nome, comprado: false });
+        lista.push({ nome, comprado: false, selecionado: false });
         input.value = "";
         render();
       }
@@ -54,7 +58,17 @@
     }
 
     function toggleComprado(index) {
-      lista[index].comprado = !lista[index].comprado;
+      if (lista[index].selecionado) {
+        lista[index].comprado = !lista[index].comprado;
+        render();
+      }
+    }
+
+    function toggleSelecionado(index) {
+      lista[index].selecionado = !lista[index].selecionado;
+      if (!lista[index].selecionado) {
+        lista[index].comprado = false;
+      }
       render();
     }
 

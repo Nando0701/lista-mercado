@@ -6,11 +6,34 @@
   <title>Lista de Mercado</title>
   <style>
     body { font-family: sans-serif; margin: 1rem; background: #f4f4f4; }
-    input[type="text"] { width: 60%; padding: 8px; font-size: 16px; }
-    select { font-size: 16px; padding: 6px; margin-left: 10px; }
-    button { padding: 6px 10px; margin-left: 5px; font-size: 16px; }
+    input[type="text"] {
+      flex-grow: 1;
+      padding: 8px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    select {
+      font-size: 16px;
+      padding: 6px;
+      margin-left: 10px;
+      border-radius: 4px;
+    }
+    button {
+      padding: 6px 10px;
+      font-size: 16px;
+    }
     ul { list-style: none; padding: 0; }
-    li { background: #fff; margin: 4px 0; padding: 6px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; }
+    li {
+      background: #fff;
+      margin: 4px 0;
+      padding: 6px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 16px;
+    }
     .comprado { text-decoration: line-through; color: gray; }
     .item-info { flex-grow: 1; cursor: pointer; }
     .nao-selecionado { opacity: 0.4; }
@@ -22,28 +45,33 @@
       width: 36px;
       height: 36px;
       font-size: 24px;
-      line-height: 0;
-      display: inline-flex;
+      margin-left: 8px;
+      display: flex;
       align-items: center;
       justify-content: center;
     }
-    .info-bar {
+    .top-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .filter-row {
       display: flex;
       align-items: center;
       margin: 10px 0;
-      font-weight: bold;
     }
   </style>
 </head>
 <body>
 
-  <div style="display: flex; align-items: center; margin-bottom: 4px;">
+  <!-- Caixa de adicionar -->
+  <div class="top-row">
     <input type="text" id="novoItem" placeholder="Adicionar novo item" />
     <button class="adicionar-btn" onclick="adicionarItem()">+</button>
   </div>
 
-  <div class="info-bar">
-    <div id="subtitulo">MOSTRANDO: TODOS ITENS</div>
+  <!-- Filtro -->
+  <div class="filter-row">
     <select id="filtro" onchange="render()">
       <option value="todos">TODOS ITENS</option>
       <option value="comprar">PARA COMPRAR</option>
@@ -51,6 +79,7 @@
     </select>
   </div>
 
+  <!-- Lista -->
   <ul id="lista"></ul>
 
   <script>
@@ -58,7 +87,6 @@
     const ul = document.getElementById("lista");
     const input = document.getElementById("novoItem");
     const filtro = document.getElementById("filtro");
-    const subtitulo = document.getElementById("subtitulo");
 
     input.addEventListener("keydown", function(event) {
       if (event.key === "Enter") {
@@ -81,12 +109,8 @@
 
       if (filtroAtual === "comprar") {
         listaFiltrada = lista.filter(item => item.selecionado);
-        subtitulo.textContent = "MOSTRANDO: PARA COMPRAR";
       } else if (filtroAtual === "naoSelecionados") {
         listaFiltrada = lista.filter(item => !item.selecionado);
-        subtitulo.textContent = "MOSTRANDO: NÃO SELECIONADOS";
-      } else {
-        subtitulo.textContent = "MOSTRANDO: TODOS ITENS";
       }
 
       listaFiltrada.forEach((item, index) => {

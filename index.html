@@ -6,26 +6,52 @@
   <title>Lista de Mercado</title>
   <style>
     body { font-family: sans-serif; margin: 1rem; background: #f4f4f4; }
-    h1 { text-align: center; }
-    input[type="text"] { width: 70%; padding: 8px; font-size: 16px; }
-    button { padding: 6px 10px; margin-left: 5px; }
+    input[type="text"] { width: 60%; padding: 8px; font-size: 16px; }
+    select { font-size: 16px; padding: 6px; margin-right: 6px; }
+    button { padding: 6px 10px; margin-left: 5px; font-size: 16px; }
     ul { list-style: none; padding: 0; }
-    li { background: #fff; margin: 8px 0; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+    li { background: #fff; margin: 4px 0; padding: 6px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; }
     .comprado { text-decoration: line-through; color: gray; }
     .item-info { flex-grow: 1; cursor: pointer; }
     .nao-selecionado { opacity: 0.4; }
+    .adicionar-btn {
+      background-color: green;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      font-size: 24px;
+      line-height: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .subtitulo { margin: 8px 0 4px 0; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>🛒 Lista de Mercado</h1>
-  <input type="text" id="novoItem" placeholder="Adicionar novo item" />
-  <button onclick="adicionarItem()">Adicionar</button>
+
+  <div style="display: flex; align-items: center; margin-bottom: 4px;">
+    <select id="filtro" onchange="render()">
+      <option value="todos">TODOS ITENS</option>
+      <option value="comprar">PARA COMPRAR</option>
+      <option value="naoSelecionados">NÃO SELECIONADOS</option>
+    </select>
+    <input type="text" id="novoItem" placeholder="Adicionar novo item" />
+    <button class="adicionar-btn" onclick="adicionarItem()">+</button>
+  </div>
+
+  <div id="subtitulo" class="subtitulo">MOSTRANDO: TODOS ITENS</div>
+
   <ul id="lista"></ul>
 
   <script>
     let lista = JSON.parse(localStorage.getItem("listaMercado") || "[]");
     const ul = document.getElementById("lista");
     const input = document.getElementById("novoItem");
+    const filtro = document.getElementById("filtro");
+    const subtitulo = document.getElementById("subtitulo");
 
     input.addEventListener("keydown", function(event) {
       if (event.key === "Enter") {
@@ -43,13 +69,26 @@
 
     function render() {
       ul.innerHTML = "";
-      lista.forEach((item, index) => {
+      let filtroAtual = filtro.value;
+      let listaFiltrada = lista;
+
+      if (filtroAtual === "comprar") {
+        listaFiltrada = lista.filter(item => item.selecionado);
+        subtitulo.textContent = "MOSTRANDO: PARA COMPRAR";
+      } else if (filtroAtual === "naoSelecionados") {
+        listaFiltrada = lista.filter(item => !item.selecionado);
+        subtitulo.textContent = "MOSTRANDO: NÃO SELECIONADOS";
+      } else {
+        subtitulo.textContent = "MOSTRANDO: TODOS ITENS";
+      }
+
+      listaFiltrada.forEach((item, index) => {
         const li = document.createElement("li");
         li.className = item.selecionado ? "" : "nao-selecionado";
         li.innerHTML = `
           <span class="item-info ${item.comprado ? 'comprado' : ''}" onclick="toggleComprado(${index})">${item.nome}</span>
-          <button onclick="toggleSelecionado(${index})">${item.selecionado ? '✓ Selecionado' : 'Selecionar'}</button>
-          <button onclick="removerItem(${index})">🗑</button>
+          <button onclick="toggleSelecionado(${index})">${item.selecionado ? '✓ COMPRAR' : 'COMPRAR'}</button>
+          <button onclick="confirmarRemoverItem(${index})">🗑</button>
         `;
         ul.appendChild(li);
       });
@@ -62,6 +101,12 @@
         lista.push({ nome, comprado: false, selecionado: false });
         input.value = "";
         render();
+      }
+    }
+
+    function confirmarRemoverItem(index) {
+      if (confirm("Deseja realmente excluir este item da lista base?")) {
+        removerItem(index);
       }
     }
 

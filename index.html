@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Lista de Mercado</title>
   <style>
     body {
@@ -69,14 +69,11 @@
     }
 
     .item span {
-      flex-grow: 1;
       cursor: pointer;
     }
 
-    .item .status {
-      margin-left: 10px;
-      font-weight: bold;
-      color: #2196F3;
+    .item span.nome {
+      flex-grow: 1;
     }
 
     .item .remove {
@@ -112,7 +109,7 @@
 
 <body>
   <div class="input-section">
-    <input type="text" id="new-item" placeholder="Adicionar novo item">
+    <input type="text" id="new-item" placeholder="Adicionar novo item" />
     <button id="add-button">+</button>
   </div>
 
@@ -151,95 +148,38 @@
     function renderList() {
       itemList.innerHTML = '';
       const filtro = filter.value;
+
       items.forEach((item, index) => {
         const show =
           filtro === 'todos' ||
           (filtro === 'comprar' && item.comprar) ||
           (filtro === 'nao' && !item.comprar);
+
         if (!show) return;
+
         const div = document.createElement('div');
         div.className = 'item';
 
-        const span = document.createElement('span');
-        span.textContent = item.nome;
-        span.onclick = () => {
-          item.comprar = !item.comprar;
-          localStorage.setItem('listaMercado', JSON.stringify(items));
-          renderList();
-        };
+        const spanNome = document.createElement('span');
+        spanNome.className = 'nome';
+        spanNome.textContent = item.nome;
 
-        const status = document.createElement('span');
-        status.className = 'status';
-        status.textContent = item.comprar ? 'COMPRAR' : '';
+        const carrinho = document.createElement('span');
+        carrinho.innerHTML = '🛒';
+        carrinho.style.marginLeft = '10px';
+        carrinho.style.fontSize = '18px';
+        carrinho.style.cursor = 'pointer';
 
-        const remove = document.createElement('span');
-        remove.className = 'remove';
-        remove.textContent = '🗑️';
-        remove.onclick = () => {
-          if (confirm('Deseja realmente remover este item da lista base?')) {
-            items.splice(index, 1);
-            alteracoes++;
-            verificarBackup();
-            localStorage.setItem('listaMercado', JSON.stringify(items));
-            renderList();
-          }
-        };
+        if (item.noCarrinho) {
+          carrinho.style.color = 'green';
+        } else if (item.comprar) {
+          carrinho.style.color = 'red';
+        } else {
+          carrinho.style.color = '#aaa';
+        }
 
-        div.appendChild(span);
-        div.appendChild(status);
-        div.appendChild(remove);
-        itemList.appendChild(div);
-      });
-    }
-
-    function adicionarItem() {
-      const nome = newItemInput.value.trim();
-      if (nome) {
-        items.push({ nome, comprar: false });
-        alteracoes++;
-        verificarBackup();
-        localStorage.setItem('listaMercado', JSON.stringify(items));
-        newItemInput.value = '';
-        renderList();
-      }
-    }
-
-    function verificarBackup() {
-      if (alteracoes >= 10) {
-        backupNotice.style.display = 'block';
-      }
-    }
-
-    addButton.onclick = adicionarItem;
-    newItemInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') adicionarItem();
-    });
-
-    filter.onchange = renderList;
-
-    saveButton.onclick = () => {
-      const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'lista-mercado.json';
-      a.target = '_blank';
-      a.click();
-    };
-
-    saveNow.onclick = () => {
-      alteracoes = 0;
-      backupNotice.style.display = 'none';
-      saveButton.click();
-    };
-
-    dismissBtn.onclick = () => {
-      alteracoes = 0;
-      backupNotice.style.display = 'none';
-    };
-
-    renderList();
-  </script>
-</body>
-
-</html>
+        carrinho.onclick = () => {
+          if (!item.comprar && !item.noCarrinho) {
+            item.comprar = true;
+            item.noCarrinho = false;
+          } else if (item.comprar && !item.noCarrinho) {

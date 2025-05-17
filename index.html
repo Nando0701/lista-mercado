@@ -183,3 +183,84 @@
             item.comprar = true;
             item.noCarrinho = false;
           } else if (item.comprar && !item.noCarrinho) {
+            item.comprar = false;
+            item.noCarrinho = true;
+          } else {
+            item.comprar = false;
+            item.noCarrinho = false;
+          }
+          localStorage.setItem('listaMercado', JSON.stringify(items));
+          renderList();
+        };
+
+        const remove = document.createElement('span');
+        remove.className = 'remove';
+        remove.textContent = '🗑️';
+        remove.onclick = () => {
+          if (confirm('Deseja realmente remover este item da lista base?')) {
+            items.splice(index, 1);
+            alteracoes++;
+            verificarBackup();
+            localStorage.setItem('listaMercado', JSON.stringify(items));
+            renderList();
+          }
+        };
+
+        div.appendChild(spanNome);
+        div.appendChild(carrinho);
+        div.appendChild(remove);
+        itemList.appendChild(div);
+      });
+    }
+
+    function adicionarItem() {
+      const nome = newItemInput.value.trim();
+      if (nome) {
+        items.push({ nome, comprar: false, noCarrinho: false });
+        alteracoes++;
+        verificarBackup();
+        localStorage.setItem('listaMercado', JSON.stringify(items));
+        newItemInput.value = '';
+        renderList();
+      }
+    }
+
+    function verificarBackup() {
+      if (alteracoes >= 10) {
+        backupNotice.style.display = 'block';
+      }
+    }
+
+    addButton.onclick = adicionarItem;
+    newItemInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') adicionarItem();
+    });
+
+    filter.onchange = renderList;
+
+    saveButton.onclick = () => {
+      const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'lista-mercado.json';
+      a.target = '_blank';
+      a.click();
+    };
+
+    saveNow.onclick = () => {
+      alteracoes = 0;
+      backupNotice.style.display = 'none';
+      saveButton.click();
+    };
+
+    dismissBtn.onclick = () => {
+      alteracoes = 0;
+      backupNotice.style.display = 'none';
+    };
+
+    renderList();
+  </script>
+</body>
+
+</html>

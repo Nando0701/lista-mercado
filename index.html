@@ -1,171 +1,245 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Lista de Mercado</title>
   <style>
-    body { font-family: sans-serif; margin: 1rem; background: #f4f4f4; }
-    input[type="text"] {
+    body {
+      font-family: sans-serif;
+      margin: 10px;
+      background: #f7f7f7;
+    }
+
+    h1 {
+      display: none;
+    }
+
+    .input-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    #new-item {
       flex-grow: 1;
-      padding: 8px;
+      padding: 10px;
       font-size: 16px;
+      border-radius: 8px;
       border: 1px solid #ccc;
-      border-radius: 4px;
     }
-    select {
-      font-size: 16px;
+
+    #add-button {
+      width: 40px;
+      height: 40px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 24px;
+      border: none;
+      border-radius: 50%;
+    }
+
+    #filter-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    #filter-label {
+      font-weight: bold;
+    }
+
+    #filter {
       padding: 6px;
-      margin-left: 10px;
-      border-radius: 4px;
+      font-size: 14px;
     }
-    button {
-      padding: 6px 10px;
-      font-size: 16px;
-    }
-    ul { list-style: none; padding: 0; }
-    li {
-      background: #fff;
-      margin: 4px 0;
-      padding: 6px;
-      border-radius: 5px;
+
+    .item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 16px;
+      background: white;
+      margin-bottom: 5px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 15px;
     }
-    .comprado { text-decoration: line-through; color: gray; }
-    .item-info { flex-grow: 1; cursor: pointer; }
-    .nao-selecionado { opacity: 0.4; }
-    .adicionar-btn {
-      background-color: green;
+
+    .item span {
+      flex-grow: 1;
+      cursor: pointer;
+    }
+
+    .item .status {
+      margin-left: 10px;
+      font-weight: bold;
+      color: #2196F3;
+    }
+
+    .item .remove {
+      color: red;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+
+    #save-button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      background-color: #2196F3;
       color: white;
       border: none;
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      font-size: 24px;
-      margin-left: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      border-radius: 6px;
+      font-size: 14px;
     }
-    .top-row {
-      display: flex;
-      align-items: center;
-      margin-bottom: 8px;
+
+    #backup-notice {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      background: #fff3cd;
+      border: 1px solid #ffeeba;
+      border-radius: 6px;
     }
-    .filter-row {
-      display: flex;
-      align-items: center;
-      margin: 10px 0;
+
+    #backup-notice button {
+      margin-left: 10px;
     }
   </style>
 </head>
-<body>
 
-  <!-- Caixa de adicionar -->
-  <div class="top-row">
-    <input type="text" id="novoItem" placeholder="Adicionar novo item" />
-    <button class="adicionar-btn" onclick="adicionarItem()">+</button>
+<body>
+  <div class="input-section">
+    <input type="text" id="new-item" placeholder="Adicionar novo item">
+    <button id="add-button">+</button>
   </div>
 
-  <!-- Filtro -->
-  <div class="filter-row">
-    <select id="filtro" onchange="render()">
+  <div id="filter-controls">
+    <span id="filter-label">MOSTRANDO</span>
+    <select id="filter">
       <option value="todos">TODOS ITENS</option>
       <option value="comprar">PARA COMPRAR</option>
-      <option value="naoSelecionados">NÃO SELECIONADOS</option>
+      <option value="nao">NÃO SELECIONADOS</option>
     </select>
   </div>
 
-  <!-- Lista -->
-  <ul id="lista"></ul>
+  <div id="item-list"></div>
+
+  <div id="backup-notice">
+    Você fez várias alterações na lista. Deseja salvar um backup?
+    <button id="save-now">Salvar agora</button>
+    <button id="dismiss">Dispensar</button>
+  </div>
+
+  <button id="save-button">Salvar lista</button>
 
   <script>
-    let lista = JSON.parse(localStorage.getItem("listaMercado") || "[]");
-    const ul = document.getElementById("lista");
-    const input = document.getElementById("novoItem");
-    const filtro = document.getElementById("filtro");
+    let items = JSON.parse(localStorage.getItem('listaMercado') || '[]');
+    let alteracoes = 0;
 
-    input.addEventListener("keydown", function(event) {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        adicionarItem();
-      }
-    });
+    const itemList = document.getElementById('item-list');
+    const newItemInput = document.getElementById('new-item');
+    const addButton = document.getElementById('add-button');
+    const filter = document.getElementById('filter');
+    const saveButton = document.getElementById('save-button');
+    const backupNotice = document.getElementById('backup-notice');
+    const saveNow = document.getElementById('save-now');
+    const dismissBtn = document.getElementById('dismiss');
 
-    input.addEventListener("blur", function() {
-      const valor = input.value.trim();
-      if (valor) {
-        adicionarItem();
-      }
-    });
+    function renderList() {
+      itemList.innerHTML = '';
+      const filtro = filter.value;
+      items.forEach((item, index) => {
+        const show =
+          filtro === 'todos' ||
+          (filtro === 'comprar' && item.comprar) ||
+          (filtro === 'nao' && !item.comprar);
+        if (!show) return;
+        const div = document.createElement('div');
+        div.className = 'item';
 
-    function render() {
-      ul.innerHTML = "";
-      let filtroAtual = filtro.value;
-      let listaFiltrada = lista;
+        const span = document.createElement('span');
+        span.textContent = item.nome;
+        span.onclick = () => {
+          item.comprar = !item.comprar;
+          localStorage.setItem('listaMercado', JSON.stringify(items));
+          renderList();
+        };
 
-      if (filtroAtual === "comprar") {
-        listaFiltrada = lista.filter(item => item.selecionado);
-      } else if (filtroAtual === "naoSelecionados") {
-        listaFiltrada = lista.filter(item => !item.selecionado);
-      }
+        const status = document.createElement('span');
+        status.className = 'status';
+        status.textContent = item.comprar ? 'COMPRAR' : '';
 
-      listaFiltrada.forEach((item, index) => {
-        const li = document.createElement("li");
-        li.className = item.selecionado ? "" : "nao-selecionado";
-        li.innerHTML = `
-          <span class="item-info ${item.comprado ? 'comprado' : ''}" onclick="toggleComprado(${index})">${item.nome}</span>
-          <button onclick="toggleSelecionado(${index})">${item.selecionado ? '✓ COMPRAR' : 'COMPRAR'}</button>
-          <button onclick="confirmarRemoverItem(${index})">🗑</button>
-        `;
-        ul.appendChild(li);
+        const remove = document.createElement('span');
+        remove.className = 'remove';
+        remove.textContent = '🗑️';
+        remove.onclick = () => {
+          if (confirm('Deseja realmente remover este item da lista base?')) {
+            items.splice(index, 1);
+            alteracoes++;
+            verificarBackup();
+            localStorage.setItem('listaMercado', JSON.stringify(items));
+            renderList();
+          }
+        };
+
+        div.appendChild(span);
+        div.appendChild(status);
+        div.appendChild(remove);
+        itemList.appendChild(div);
       });
-      salvar();
     }
 
     function adicionarItem() {
-      const nome = input.value.trim();
+      const nome = newItemInput.value.trim();
       if (nome) {
-        lista.push({ nome, comprado: false, selecionado: false });
-        input.value = "";
-        render();
+        items.push({ nome, comprar: false });
+        alteracoes++;
+        verificarBackup();
+        localStorage.setItem('listaMercado', JSON.stringify(items));
+        newItemInput.value = '';
+        renderList();
       }
     }
 
-    function confirmarRemoverItem(index) {
-      if (confirm("Deseja realmente excluir este item da lista base?")) {
-        removerItem(index);
+    function verificarBackup() {
+      if (alteracoes >= 10) {
+        backupNotice.style.display = 'block';
       }
     }
 
-    function removerItem(index) {
-      lista.splice(index, 1);
-      render();
-    }
+    addButton.onclick = adicionarItem;
+    newItemInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') adicionarItem();
+    });
 
-    function toggleComprado(index) {
-      if (lista[index].selecionado) {
-        lista[index].comprado = !lista[index].comprado;
-        render();
-      }
-    }
+    filter.onchange = renderList;
 
-    function toggleSelecionado(index) {
-      lista[index].selecionado = !lista[index].selecionado;
-      if (!lista[index].selecionado) {
-        lista[index].comprado = false;
-      }
-      render();
-    }
+    saveButton.onclick = () => {
+      const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'lista-mercado.json';
+      a.target = '_blank';
+      a.click();
+    };
 
-    function salvar() {
-      localStorage.setItem("listaMercado", JSON.stringify(lista));
-    }
+    saveNow.onclick = () => {
+      alteracoes = 0;
+      backupNotice.style.display = 'none';
+      saveButton.click();
+    };
 
-    render();
+    dismissBtn.onclick = () => {
+      alteracoes = 0;
+      backupNotice.style.display = 'none';
+    };
+
+    renderList();
   </script>
 </body>
+
 </html>

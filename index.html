@@ -1,266 +1,216 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Lista de Mercado</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lista de Compras</title>
   <style>
     body {
       font-family: sans-serif;
-      margin: 10px;
-      background: #f7f7f7;
-    }
-
-    h1 {
-      display: none;
-    }
-
-    .input-section {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    #new-item {
-      flex-grow: 1;
+      margin: 0;
       padding: 10px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+      background-color: #f0f0f0;
     }
 
-    #add-button {
-      width: 40px;
-      height: 40px;
-      background-color: #4CAF50;
-      color: white;
-      font-size: 24px;
-      border: none;
-      border-radius: 50%;
-    }
-
-    #filter-controls {
+    .top-bar {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 10px;
+      background-color: #3b6dc5;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 16px;
       margin-bottom: 10px;
     }
 
-    #filter-label {
-      font-weight: bold;
-    }
-
-    #filter {
-      padding: 6px;
+    .top-bar select {
+      padding: 4px;
+      border-radius: 4px;
       font-size: 14px;
     }
 
     .item {
       display: flex;
-      justify-content: space-between;
       align-items: center;
       background: white;
-      margin-bottom: 5px;
-      padding: 6px 10px;
       border-radius: 6px;
-      font-size: 15px;
+      margin-bottom: 6px;
+      padding: 6px;
+      border: 1px solid #ccc;
     }
 
-    .item span {
+    .item input {
+      flex: 1;
+      border: none;
+      font-size: 16px;
+      margin: 0 6px;
+      background: transparent;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
       cursor: pointer;
+      font-size: 18px;
     }
 
-    .item span.nome {
-      flex-grow: 1;
+    .cart {
+      color: #888;
     }
 
-    .item .remove {
+    .cart.comprar {
       color: red;
-      margin-left: 10px;
-      cursor: pointer;
     }
 
-    #save-button {
-      margin-top: 10px;
-      padding: 6px 12px;
-      background-color: #2196F3;
+    .cart.ok {
+      color: green;
+    }
+
+    .footer-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      gap: 10px;
+    }
+
+    .footer-buttons button {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      background-color: #3b6dc5;
       color: white;
       border: none;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-
-    #backup-notice {
-      display: none;
-      margin-top: 10px;
-      padding: 10px;
-      background: #fff3cd;
-      border: 1px solid #ffeeba;
-      border-radius: 6px;
-    }
-
-    #backup-notice button {
-      margin-left: 10px;
+      border-radius: 8px;
     }
   </style>
 </head>
-
 <body>
-  <div class="input-section">
-    <input type="text" id="new-item" placeholder="Adicionar novo item" />
-    <button id="add-button">+</button>
-  </div>
-
-  <div id="filter-controls">
-    <span id="filter-label">MOSTRANDO</span>
-    <select id="filter">
-      <option value="todos">TODOS ITENS</option>
-      <option value="comprar">PARA COMPRAR</option>
-      <option value="nao">NÃO SELECIONADOS</option>
+  <div class="top-bar">
+    <span id="filter-label">Mostrando Itens a Comprar</span>
+    <select id="filter-select">
+      <option value="comprar">Itens a Comprar</option>
+      <option value="todos">Todos os Itens</option>
+      <option value="nao">Itens Não Selecionados</option>
     </select>
   </div>
 
-  <div id="item-list"></div>
+  <div id="lista"></div>
 
-  <div id="backup-notice">
-    Você fez várias alterações na lista. Deseja salvar um backup?
-    <button id="save-now">Salvar agora</button>
-    <button id="dismiss">Dispensar</button>
+  <div class="footer-buttons">
+    <button onclick="adicionarItem()">Adicionar item</button>
+    <button onclick="salvarLista()">SALVAR LISTA</button>
+    <button onclick="abrirLista()">ABRIR LISTA</button>
   </div>
 
-  <button id="save-button">Salvar lista</button>
-
   <script>
-    let items = JSON.parse(localStorage.getItem('listaMercado') || '[]');
-    let alteracoes = 0;
+    let lista = JSON.parse(localStorage.getItem('listaMercado') || '[]');
+    const listaEl = document.getElementById('lista');
+    const filtroEl = document.getElementById('filter-select');
+    const labelFiltro = document.getElementById('filter-label');
 
-    const itemList = document.getElementById('item-list');
-    const newItemInput = document.getElementById('new-item');
-    const addButton = document.getElementById('add-button');
-    const filter = document.getElementById('filter');
-    const saveButton = document.getElementById('save-button');
-    const backupNotice = document.getElementById('backup-notice');
-    const saveNow = document.getElementById('save-now');
-    const dismissBtn = document.getElementById('dismiss');
+    function renderizar() {
+      listaEl.innerHTML = '';
+      const filtro = filtroEl.value;
 
-    function renderList() {
-      itemList.innerHTML = '';
-      const filtro = filter.value;
-
-      items.forEach((item, index) => {
-        const show =
+      lista.forEach((item, i) => {
+        const mostrar = 
           filtro === 'todos' ||
-          (filtro === 'comprar' && item.comprar) ||
-          (filtro === 'nao' && !item.comprar);
+          (filtro === 'comprar' && item.status === 'comprar') ||
+          (filtro === 'nao' && item.status === 'neutro');
 
-        if (!show) return;
+        if (!mostrar) return;
 
         const div = document.createElement('div');
         div.className = 'item';
 
-        const spanNome = document.createElement('span');
-        spanNome.className = 'nome';
-        spanNome.textContent = item.nome;
-
-        const carrinho = document.createElement('span');
-        carrinho.innerHTML = '🛒';
-        carrinho.style.marginLeft = '10px';
-        carrinho.style.fontSize = '18px';
-        carrinho.style.cursor = 'pointer';
-
-        if (item.noCarrinho) {
-          carrinho.style.color = 'green';
-        } else if (item.comprar) {
-          carrinho.style.color = 'red';
-        } else {
-          carrinho.style.color = '#aaa';
-        }
-
-        carrinho.onclick = () => {
-          if (!item.comprar && !item.noCarrinho) {
-            item.comprar = true;
-            item.noCarrinho = false;
-          } else if (item.comprar && !item.noCarrinho) {
-            item.comprar = false;
-            item.noCarrinho = true;
-          } else {
-            item.comprar = false;
-            item.noCarrinho = false;
-          }
-          localStorage.setItem('listaMercado', JSON.stringify(items));
-          renderList();
+        const btnCarrinho = document.createElement('button');
+        btnCarrinho.className = `icon-btn cart ${item.status}`;
+        btnCarrinho.innerHTML = '🛒';
+        btnCarrinho.onclick = () => {
+          if (item.status === 'neutro') item.status = 'comprar';
+          else if (item.status === 'comprar') item.status = 'ok';
+          else item.status = 'neutro';
+          salvarLocal();
+          renderizar();
         };
 
-        const remove = document.createElement('span');
-        remove.className = 'remove';
-        remove.textContent = '🗑️';
-        remove.onclick = () => {
-          if (confirm('Deseja realmente remover este item da lista base?')) {
-            items.splice(index, 1);
-            alteracoes++;
-            verificarBackup();
-            localStorage.setItem('listaMercado', JSON.stringify(items));
-            renderList();
+        const input = document.createElement('input');
+        input.value = item.nome;
+        input.onchange = (e) => {
+          item.nome = e.target.value;
+          salvarLocal();
+        };
+
+        const btnExcluir = document.createElement('button');
+        btnExcluir.className = 'icon-btn';
+        btnExcluir.innerHTML = '🗑️';
+        btnExcluir.onclick = () => {
+          if (confirm('Deseja remover este item?')) {
+            lista.splice(i, 1);
+            salvarLocal();
+            renderizar();
           }
         };
 
-        div.appendChild(spanNome);
-        div.appendChild(carrinho);
-        div.appendChild(remove);
-        itemList.appendChild(div);
+        div.appendChild(btnCarrinho);
+        div.appendChild(input);
+        div.appendChild(btnExcluir);
+        listaEl.appendChild(div);
       });
     }
 
+    function salvarLocal() {
+      localStorage.setItem('listaMercado', JSON.stringify(lista));
+    }
+
     function adicionarItem() {
-      const nome = newItemInput.value.trim();
-      if (nome) {
-        items.push({ nome, comprar: false, noCarrinho: false });
-        alteracoes++;
-        verificarBackup();
-        localStorage.setItem('listaMercado', JSON.stringify(items));
-        newItemInput.value = '';
-        renderList();
-      }
+      lista.push({ nome: 'Novo item', status: 'neutro' });
+      salvarLocal();
+      renderizar();
     }
 
-    function verificarBackup() {
-      if (alteracoes >= 10) {
-        backupNotice.style.display = 'block';
-      }
-    }
-
-    addButton.onclick = adicionarItem;
-    newItemInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') adicionarItem();
-    });
-
-    filter.onchange = renderList;
-
-    saveButton.onclick = () => {
-      const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
+    function salvarLista() {
+      const blob = new Blob([JSON.stringify(lista, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = 'lista-mercado.json';
-      a.target = '_blank';
       a.click();
+    }
+
+    function abrirLista() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            lista = JSON.parse(e.target.result);
+            salvarLocal();
+            renderizar();
+          } catch (err) {
+            alert('Erro ao carregar a lista.');
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
+
+    filtroEl.onchange = () => {
+      const labelMap = {
+        comprar: 'Mostrando Itens a Comprar',
+        todos: 'Mostrando Todos os Itens',
+        nao: 'Mostrando Itens Não Selecionados'
+      };
+      labelFiltro.textContent = labelMap[filtroEl.value];
+      renderizar();
     };
 
-    saveNow.onclick = () => {
-      alteracoes = 0;
-      backupNotice.style.display = 'none';
-      saveButton.click();
-    };
-
-    dismissBtn.onclick = () => {
-      alteracoes = 0;
-      backupNotice.style.display = 'none';
-    };
-
-    renderList();
+    renderizar();
   </script>
 </body>
-
 </html>

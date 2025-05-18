@@ -2,213 +2,260 @@
 <html lang="pt-BR">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lista de Mercado</title>
   <style>
     body {
       font-family: sans-serif;
-      background: #f0f0f0;
-      margin: 0;
-      padding: 10px;
+      margin: 10px;
+      background: #f7f7f7;
     }
 
-    .header {
+    .input-section {
       display: flex;
       align-items: center;
-      background-color: #3f6fda;
-      color: white;
-      padding: 8px;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    #new-item {
+      flex-grow: 1;
+      padding: 10px;
+      font-size: 16px;
       border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    #add-button {
+      width: 40px;
+      height: 40px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 24px;
+      border: none;
+      border-radius: 50%;
+    }
+
+    #filter-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       margin-bottom: 10px;
     }
 
     #filter {
-      flex-grow: 1;
-      font-size: 16px;
       padding: 6px;
-      border-radius: 6px;
+      font-size: 14px;
     }
 
     .item {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      background-color: white;
-      margin-bottom: 6px;
-      padding: 8px;
-      border-radius: 8px;
+      background: white;
+      margin-bottom: 5px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 15px;
     }
 
-    .cart-icon {
-      font-size: 20px;
-      margin-right: 10px;
-      cursor: pointer;
-    }
-
-    .item-name {
+    .item span {
       flex-grow: 1;
-      font-size: 16px;
     }
 
-    .delete-btn {
-      font-size: 18px;
-      color: #d00;
+    .remove {
+      color: red;
+      margin-left: 10px;
       cursor: pointer;
+    }
+
+    .cart-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      color: white;
+      margin-right: 10px;
+    }
+
+    .blue {
+      background-color: #2196F3;
+    }
+
+    .red {
+      background-color: #F44336;
+    }
+
+    .green {
+      background-color: #4CAF50;
+    }
+
+    #backup-notice {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      background: #fff3cd;
+      border: 1px solid #ffeeba;
+      border-radius: 6px;
+    }
+
+    #backup-notice button {
       margin-left: 10px;
     }
 
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 20px;
-      gap: 10px;
-    }
-
-    button {
-      padding: 12px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
+    #save-button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      background-color: #2196F3;
       color: white;
-      cursor: pointer;
-    }
-
-    #add-button {
-      background-color: #3f6fda;
-      flex-grow: 2;
-    }
-
-    #save-button,
-    #load-button {
-      background-color: #3f6fda;
-      flex-grow: 1;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
     }
   </style>
 </head>
 
 <body>
-  <div class="header">
+  <div class="input-section">
+    <input type="text" id="new-item" placeholder="Adicionar novo item">
+    <button id="add-button">+</button>
+  </div>
+
+  <div id="filter-controls">
     <select id="filter">
-      <option value="comprar">Mostrando Itens a Comprar</option>
-      <option value="todos">Mostrando Todos os Itens</option>
-      <option value="nao">Mostrando Itens Não Selecionados</option>
+      <option value="todos">MOSTRANDO TODOS OS ITENS</option>
+      <option value="comprar">MOSTRANDO ITENS A COMPRAR</option>
+      <option value="nao">MOSTRANDO ITENS NÃO SELECIONADOS</option>
     </select>
   </div>
 
   <div id="item-list"></div>
 
-  <div class="footer">
-    <button id="add-button">Adicionar item</button>
-    <button id="save-button">SALVAR LISTA</button>
-    <button id="load-button">ABRIR LISTA</button>
+  <div id="backup-notice">
+    Você fez várias alterações na lista. Deseja salvar um backup?
+    <button id="save-now">Salvar agora</button>
+    <button id="dismiss">Dispensar</button>
   </div>
 
-  <script>
-    let items = JSON.parse(localStorage.getItem("listaMercado") || "[]");
+  <button id="save-button">Salvar lista</button>
 
-    const itemList = document.getElementById("item-list");
-    const filter = document.getElementById("filter");
-    const addButton = document.getElementById("add-button");
-    const saveButton = document.getElementById("save-button");
-    const loadButton = document.getElementById("load-button");
+  <script>
+    let items = JSON.parse(localStorage.getItem('listaMercado') || '[]');
+    let alteracoes = 0;
+
+    const itemList = document.getElementById('item-list');
+    const newItemInput = document.getElementById('new-item');
+    const addButton = document.getElementById('add-button');
+    const filter = document.getElementById('filter');
+    const saveButton = document.getElementById('save-button');
+    const backupNotice = document.getElementById('backup-notice');
+    const saveNow = document.getElementById('save-now');
+    const dismissBtn = document.getElementById('dismiss');
 
     function renderList() {
-      itemList.innerHTML = "";
+      itemList.innerHTML = '';
       const filtro = filter.value;
-
       items.forEach((item, index) => {
-        const show =
-          filtro === "todos" ||
-          (filtro === "comprar" && item.status === "comprar") ||
-          (filtro === "nao" && item.status === "nenhum");
-        if (!show) return;
+        const mostrar =
+          filtro === 'todos' ||
+          (filtro === 'comprar' && item.status === 'comprar') ||
+          (filtro === 'nao' && item.status !== 'comprar');
 
-        const div = document.createElement("div");
-        div.className = "item";
+        if (!mostrar) return;
 
-        const carrinho = document.createElement("span");
-        carrinho.className = "cart-icon";
-        carrinho.innerHTML = "🛒";
-        carrinho.style.color =
-          item.status === "comprar"
-            ? "red"
-            : item.status === "comprado"
-            ? "green"
-            : "blue";
+        const div = document.createElement('div');
+        div.className = 'item';
+
+        const carrinho = document.createElement('div');
+        carrinho.className = 'cart-btn';
+        if (item.status === 'comprar') carrinho.classList.add('red');
+        else if (item.status === 'comprado') carrinho.classList.add('green');
+        else carrinho.classList.add('blue');
+        carrinho.textContent = '🛒';
 
         carrinho.onclick = () => {
-          if (item.status === "nenhum") item.status = "comprar";
-          else if (item.status === "comprar") item.status = "comprado";
-          else item.status = "nenhum";
-          localStorage.setItem("listaMercado", JSON.stringify(items));
+          if (item.status === 'nenhum') item.status = 'comprar';
+          else if (item.status === 'comprar') item.status = 'comprado';
+          else item.status = 'nenhum';
+          localStorage.setItem('listaMercado', JSON.stringify(items));
           renderList();
         };
 
-        const span = document.createElement("span");
-        span.className = "item-name";
+        const span = document.createElement('span');
         span.textContent = item.nome;
 
-        const remover = document.createElement("span");
-        remover.className = "delete-btn";
-        remover.textContent = "🗑️";
-        remover.onclick = () => {
-          if (confirm("Deseja remover este item da lista?")) {
+        const remove = document.createElement('span');
+        remove.className = 'remove';
+        remove.textContent = '🗑️';
+        remove.onclick = () => {
+          if (confirm('Deseja realmente remover este item da lista base?')) {
             items.splice(index, 1);
-            localStorage.setItem("listaMercado", JSON.stringify(items));
+            alteracoes++;
+            verificarBackup();
+            localStorage.setItem('listaMercado', JSON.stringify(items));
             renderList();
           }
         };
 
         div.appendChild(carrinho);
         div.appendChild(span);
-        div.appendChild(remover);
+        div.appendChild(remove);
         itemList.appendChild(div);
       });
     }
 
-    addButton.onclick = () => {
-      const nome = prompt("Digite o nome do novo item:");
-      if (nome && nome.trim()) {
-        items.push({ nome: nome.trim(), status: "nenhum" });
-        localStorage.setItem("listaMercado", JSON.stringify(items));
+    function adicionarItem() {
+      const nome = newItemInput.value.trim();
+      if (nome) {
+        items.push({ nome, status: 'nenhum' });
+        alteracoes++;
+        verificarBackup();
+        localStorage.setItem('listaMercado', JSON.stringify(items));
+        newItemInput.value = '';
         renderList();
       }
-    };
+    }
+
+    function verificarBackup() {
+      if (alteracoes >= 10) {
+        backupNotice.style.display = 'block';
+      }
+    }
+
+    addButton.onclick = adicionarItem;
+    newItemInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') adicionarItem();
+    });
+
+    filter.value = 'todos'; // padrão ao carregar
+    filter.onchange = renderList;
 
     saveButton.onclick = () => {
-      const blob = new Blob([JSON.stringify(items, null, 2)], {
-        type: "application/json",
-      });
+      const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
-      a.download = "lista-mercado.json";
+      a.download = 'lista-mercado.json';
+      a.target = '_blank';
       a.click();
     };
 
-    loadButton.onclick = () => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "application/json";
-      input.onchange = (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            items = JSON.parse(e.target.result);
-            localStorage.setItem("listaMercado", JSON.stringify(items));
-            renderList();
-          } catch {
-            alert("Arquivo inválido.");
-          }
-        };
-        reader.readAsText(file);
-      };
-      input.click();
+    saveNow.onclick = () => {
+      alteracoes = 0;
+      backupNotice.style.display = 'none';
+      saveButton.click();
     };
 
-    filter.onchange = renderList;
+    dismissBtn.onclick = () => {
+      alteracoes = 0;
+      backupNotice.style.display = 'none';
+    };
+
     renderList();
   </script>
 </body>

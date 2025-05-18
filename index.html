@@ -1,216 +1,216 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lista de Compras</title>
+  <title>Lista de Mercado</title>
   <style>
     body {
       font-family: sans-serif;
+      background: #f0f0f0;
       margin: 0;
       padding: 10px;
-      background-color: #f0f0f0;
     }
 
-    .top-bar {
+    .header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      background-color: #3b6dc5;
+      background-color: #3f6fda;
       color: white;
-      padding: 10px;
+      padding: 8px;
       border-radius: 8px;
-      font-size: 16px;
       margin-bottom: 10px;
     }
 
-    .top-bar select {
-      padding: 4px;
-      border-radius: 4px;
-      font-size: 14px;
+    #filter {
+      flex-grow: 1;
+      font-size: 16px;
+      padding: 6px;
+      border-radius: 6px;
     }
 
     .item {
       display: flex;
       align-items: center;
-      background: white;
-      border-radius: 6px;
+      background-color: white;
       margin-bottom: 6px;
-      padding: 6px;
-      border: 1px solid #ccc;
+      padding: 8px;
+      border-radius: 8px;
     }
 
-    .item input {
-      flex: 1;
-      border: none;
-      font-size: 16px;
-      margin: 0 6px;
-      background: transparent;
-    }
-
-    .icon-btn {
-      background: none;
-      border: none;
+    .cart-icon {
+      font-size: 20px;
+      margin-right: 10px;
       cursor: pointer;
+    }
+
+    .item-name {
+      flex-grow: 1;
+      font-size: 16px;
+    }
+
+    .delete-btn {
       font-size: 18px;
+      color: #d00;
+      cursor: pointer;
+      margin-left: 10px;
     }
 
-    .cart {
-      color: #888;
-    }
-
-    .cart.comprar {
-      color: red;
-    }
-
-    .cart.ok {
-      color: green;
-    }
-
-    .footer-buttons {
+    .footer {
       display: flex;
       justify-content: space-between;
       margin-top: 20px;
       gap: 10px;
     }
 
-    .footer-buttons button {
-      flex: 1;
-      padding: 10px;
+    button {
+      padding: 12px;
       font-size: 16px;
-      background-color: #3b6dc5;
-      color: white;
       border: none;
       border-radius: 8px;
+      color: white;
+      cursor: pointer;
+    }
+
+    #add-button {
+      background-color: #3f6fda;
+      flex-grow: 2;
+    }
+
+    #save-button,
+    #load-button {
+      background-color: #3f6fda;
+      flex-grow: 1;
     }
   </style>
 </head>
+
 <body>
-  <div class="top-bar">
-    <span id="filter-label">Mostrando Itens a Comprar</span>
-    <select id="filter-select">
-      <option value="comprar">Itens a Comprar</option>
-      <option value="todos">Todos os Itens</option>
-      <option value="nao">Itens Não Selecionados</option>
+  <div class="header">
+    <select id="filter">
+      <option value="comprar">Mostrando Itens a Comprar</option>
+      <option value="todos">Mostrando Todos os Itens</option>
+      <option value="nao">Mostrando Itens Não Selecionados</option>
     </select>
   </div>
 
-  <div id="lista"></div>
+  <div id="item-list"></div>
 
-  <div class="footer-buttons">
-    <button onclick="adicionarItem()">Adicionar item</button>
-    <button onclick="salvarLista()">SALVAR LISTA</button>
-    <button onclick="abrirLista()">ABRIR LISTA</button>
+  <div class="footer">
+    <button id="add-button">Adicionar item</button>
+    <button id="save-button">SALVAR LISTA</button>
+    <button id="load-button">ABRIR LISTA</button>
   </div>
 
   <script>
-    let lista = JSON.parse(localStorage.getItem('listaMercado') || '[]');
-    const listaEl = document.getElementById('lista');
-    const filtroEl = document.getElementById('filter-select');
-    const labelFiltro = document.getElementById('filter-label');
+    let items = JSON.parse(localStorage.getItem("listaMercado") || "[]");
 
-    function renderizar() {
-      listaEl.innerHTML = '';
-      const filtro = filtroEl.value;
+    const itemList = document.getElementById("item-list");
+    const filter = document.getElementById("filter");
+    const addButton = document.getElementById("add-button");
+    const saveButton = document.getElementById("save-button");
+    const loadButton = document.getElementById("load-button");
 
-      lista.forEach((item, i) => {
-        const mostrar = 
-          filtro === 'todos' ||
-          (filtro === 'comprar' && item.status === 'comprar') ||
-          (filtro === 'nao' && item.status === 'neutro');
+    function renderList() {
+      itemList.innerHTML = "";
+      const filtro = filter.value;
 
-        if (!mostrar) return;
+      items.forEach((item, index) => {
+        const show =
+          filtro === "todos" ||
+          (filtro === "comprar" && item.status === "comprar") ||
+          (filtro === "nao" && item.status === "nenhum");
+        if (!show) return;
 
-        const div = document.createElement('div');
-        div.className = 'item';
+        const div = document.createElement("div");
+        div.className = "item";
 
-        const btnCarrinho = document.createElement('button');
-        btnCarrinho.className = `icon-btn cart ${item.status}`;
-        btnCarrinho.innerHTML = '🛒';
-        btnCarrinho.onclick = () => {
-          if (item.status === 'neutro') item.status = 'comprar';
-          else if (item.status === 'comprar') item.status = 'ok';
-          else item.status = 'neutro';
-          salvarLocal();
-          renderizar();
+        const carrinho = document.createElement("span");
+        carrinho.className = "cart-icon";
+        carrinho.innerHTML = "🛒";
+        carrinho.style.color =
+          item.status === "comprar"
+            ? "red"
+            : item.status === "comprado"
+            ? "green"
+            : "blue";
+
+        carrinho.onclick = () => {
+          if (item.status === "nenhum") item.status = "comprar";
+          else if (item.status === "comprar") item.status = "comprado";
+          else item.status = "nenhum";
+          localStorage.setItem("listaMercado", JSON.stringify(items));
+          renderList();
         };
 
-        const input = document.createElement('input');
-        input.value = item.nome;
-        input.onchange = (e) => {
-          item.nome = e.target.value;
-          salvarLocal();
-        };
+        const span = document.createElement("span");
+        span.className = "item-name";
+        span.textContent = item.nome;
 
-        const btnExcluir = document.createElement('button');
-        btnExcluir.className = 'icon-btn';
-        btnExcluir.innerHTML = '🗑️';
-        btnExcluir.onclick = () => {
-          if (confirm('Deseja remover este item?')) {
-            lista.splice(i, 1);
-            salvarLocal();
-            renderizar();
+        const remover = document.createElement("span");
+        remover.className = "delete-btn";
+        remover.textContent = "🗑️";
+        remover.onclick = () => {
+          if (confirm("Deseja remover este item da lista?")) {
+            items.splice(index, 1);
+            localStorage.setItem("listaMercado", JSON.stringify(items));
+            renderList();
           }
         };
 
-        div.appendChild(btnCarrinho);
-        div.appendChild(input);
-        div.appendChild(btnExcluir);
-        listaEl.appendChild(div);
+        div.appendChild(carrinho);
+        div.appendChild(span);
+        div.appendChild(remover);
+        itemList.appendChild(div);
       });
     }
 
-    function salvarLocal() {
-      localStorage.setItem('listaMercado', JSON.stringify(lista));
-    }
+    addButton.onclick = () => {
+      const nome = prompt("Digite o nome do novo item:");
+      if (nome && nome.trim()) {
+        items.push({ nome: nome.trim(), status: "nenhum" });
+        localStorage.setItem("listaMercado", JSON.stringify(items));
+        renderList();
+      }
+    };
 
-    function adicionarItem() {
-      lista.push({ nome: 'Novo item', status: 'neutro' });
-      salvarLocal();
-      renderizar();
-    }
-
-    function salvarLista() {
-      const blob = new Blob([JSON.stringify(lista, null, 2)], { type: 'application/json' });
+    saveButton.onclick = () => {
+      const blob = new Blob([JSON.stringify(items, null, 2)], {
+        type: "application/json",
+      });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = 'lista-mercado.json';
+      a.download = "lista-mercado.json";
       a.click();
-    }
+    };
 
-    function abrirLista() {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'application/json';
-      input.onchange = (e) => {
-        const file = e.target.files[0];
+    loadButton.onclick = () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/json";
+      input.onchange = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
         const reader = new FileReader();
         reader.onload = (e) => {
           try {
-            lista = JSON.parse(e.target.result);
-            salvarLocal();
-            renderizar();
-          } catch (err) {
-            alert('Erro ao carregar a lista.');
+            items = JSON.parse(e.target.result);
+            localStorage.setItem("listaMercado", JSON.stringify(items));
+            renderList();
+          } catch {
+            alert("Arquivo inválido.");
           }
         };
         reader.readAsText(file);
       };
       input.click();
-    }
-
-    filtroEl.onchange = () => {
-      const labelMap = {
-        comprar: 'Mostrando Itens a Comprar',
-        todos: 'Mostrando Todos os Itens',
-        nao: 'Mostrando Itens Não Selecionados'
-      };
-      labelFiltro.textContent = labelMap[filtroEl.value];
-      renderizar();
     };
 
-    renderizar();
+    filter.onchange = renderList;
+    renderList();
   </script>
 </body>
+
 </html>
